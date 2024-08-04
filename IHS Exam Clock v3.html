@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examination Timer</title>
+    <style>
+        /* General page styling */
+        body {
+            font-family: sans-serif;
+            font-size: 20px;
+            color: #424242;
+            margin: 20px;
+            text-align: center;
+        }
+        input, button {
+            font-family: monospace;
+            font-size: 18px;
+            color: #424242;
+            height: 40px;
+            box-sizing: border-box;
+            padding: 10px;
+        }
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        /* Exam container styling for tiling */
+        .exam-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px;
+            display: inline-block;
+            width: calc(30% - 40px);
+            text-align: center;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        /* Title styling */
+        .exam-title {
+            font-size: 30px;
+            font-weight: bold;
+        }
+        .time-label {
+            font-size: 24px;
+        }
+        .exam-duration {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
+        .remaining-time {
+            font-size: 18px;
+        }
+        .time-end {
+            font-size: 28px;
+            font-weight: bold;
+        }
+        /* Status colors */
+        .reading-time {
+            background-color: #e0f7fa;
+        }
+        .writing-time {
+            background-color: #e8f5e9;
+        }
+        .last-10-mins {
+            background-color: #fff3e0;
+        }
+        .time-up {
+            background-color: #ff6c6c;
+        }
+        #curtime {
+            font-family: sans-serif;
+            font-size: 100px;
+            color: #424242;
+            padding-top: 20px;
+        }
+        .hidden {
+            display: none;
+        }
+        .button-container, .buttons-group, .bottom-buttons {
+            margin-top: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+        /* Main title styling */
+        #main-title {
+            font-size: 36px;
+            color: red;
+            margin-bottom: 10px;
+        }
+        #setup-title {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+        .clear-button {
+            background-color: red;
+            color: white;
+        }
+        .setup-button {
+            background-color: green;
+            color: white;
+        }
+        #exam-date {
+            font-size: 38px;
+            padding-top: 20px;
+        }
+        @media (max-width: 768px) {
+            .exam-container {
+                width: calc(100% - 40px);
+            }
+            #curtime {
+                font-size: 60px;
+            }
+        }
+        #school-crest {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 150px; /* Adjusted size */
+            height: auto;
+        }
+        .input-group {
+            display: flex;
+            justify-content: left;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .input-group label {
+            margin-right: 10px;
+            font-weight: bold;
+        }
+        .centered-input-group {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+            font-size: 24px;
+            margin-top: 40px;
+            font-weight: bold;
+        }
+        .form-section {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+        .exam-info-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px;
+            display: inline-block;
+            width: calc(30% - 20px);
+            text-align: center;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+        }
+        #download-print-buttons {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+        }
+        #commence-button {
+            font-size: 24px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        #exam-info-list {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        .optional-info {
+            font-size: 18px;
+            color: #666;
+            margin-top: 20px;
+        }
+        .settings-group, .checkbox-group, .add-exam-group {
+            margin-bottom: 10px;
+        }
+        .checkbox-group label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 5px;
+        }
+        .input-small {
+            width: 90px;
+        }
+        .buttons-top-right {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            gap: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        td {
+            padding: 5px;
+            vertical-align: top;
+        }
+        h2, h3 {
+            text-align: left;
+        }
+        .separator {
+            border-left: 1px solid #ccc;
+            height: 100%;
+            margin: 0 10px;
+        }
+        .finished {
+            color: red;
+            font-size: 30px;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <img id="school-crest" src="school-crest.png" alt="School Crest">
+    <div id="main-title">Examination Timer</div>
+    <div id="setup-page">
+        <div id="setup-title">Examination Setup Page</div>
+        <div class="buttons-top-right">
+            <button onclick="clearAllExams()" class="clear-button">Clear All Exams</button>
+            <button onclick="goToExamInfo()" class="setup-button">Set up Exam Timer</button>
+        </div>
+        <table>
+            <tr>
+                <td>
+                    <h2>Overall Setup:</h2>
+                    <div class="settings-group">
+                        <h3>Examination type:</h3>
+                        <div class="checkbox-group" style="line-height: 1.2;">
+                            <label><input type="checkbox" id="trial-hsc" name="examtype" value="Trial HSC Examinations">Trial HSC Examinations</label>
+                            <label><input type="checkbox" id="hsc" name="examtype" value="HSC Examinations">HSC Examinations</label>
+                            <label><input type="checkbox" id="preliminary" name="examtype" value="Preliminary Examinations">Preliminary Examinations</label>
+                            <label><input type="checkbox" id="half-yearly" name="examtype" value="Half Yearly Examinations">Half Yearly Examinations</label>
+                            <label><input type="checkbox" id="checkout" name="examtype" value="Exit Examinations">Exit Examinations</label>
+                            <label><input type="checkbox" id="yearly" name="examtype" value="Yearly Examinations">Yearly Examinations</label>
+                            <label>
+                                <input type="checkbox" id="other" name="examtype" value="Other">Other
+                                <input type="text" id="other-text" placeholder="Specify other" disabled style="margin-left: 10px;">
+                            </label>
+                        </div>
+                        <h3>Other options:</h3>
+                        <div class="checkbox-group" style="line-height: 1.2;">
+                            <label><input type="checkbox" id="show-centre" name="options">Show Examination Centre</label>
+                            <label><input type="checkbox" id="hide-crest" name="options">Hide School Crest</label>
+                            <label><input type="checkbox" id="time-only" name="options">Display clock only</label>
+                        </div>
+                        <p>NB: If time only is needed, continue onto 'Set up Exam Timer'</p>
+                    </div>
+                </td>
+                <td class="separator"></td>
+                <td>
+                    <h2>Add Examinations</h2>
+                    <div class="add-exam-group">
+                        <div class="input-group">
+                            <label for="examname">Examination Name:</label>
+                            <input type="text" id="examname" placeholder="Enter exam name" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="readmins">Reading time:   </label>
+                            <input type="number" id="readmins" class="input-small" placeholder="mins" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="writehrs">Writing time:</label>
+                            <input type="number" id="writehrs" class="input-small" placeholder="hrs" required style="margin-right: 10px;">
+                            <input type="number" id="writemins" class="input-small" placeholder="mins" required>
+                        </div>
+                        <div class="input-group">
+                            <label for="optional">Optional extra information for students:</label>
+                        </div>
+                        <textarea id="optional" placeholder="Enter optional information" style="width: calc(100% - 20px); height: 100px;"></textarea>
+                    </div>
+                    <div class="buttons-group">
+                        <button onclick="addExam()">Add Exam</button>
+                    </div>
+                    <div id="error" role="alert" style="color:red;"></div>
+                    <div id="exam-list"></div>
+                </td>
+            </tr>
+        </table>
+    </div>
+    <div id="exam-info-page" class="hidden">
+        <div id="download-print-buttons">
+            <button onclick="downloadExamSchedule()">Download Schedule</button>
+            <button onclick="printExamSchedule()">Print Schedule</button>
+        </div>
+        <div id="exam-info-list"></div>
+        <div class="button-container">
+            <button id="commence-button" onclick="commenceExams()">Commence Exams</button>
+            <button onclick="goBackToSetup()">Back</button>
+        </div>
+        <div id="exam-date-info"></div>
+        <div>The current time is <span id="current-time-info"></span></div>
+    </div>
+    <div id="exam-page" class="hidden">
+        <div id="exam-date"></div>
+        <div id="curtime"></div>
+        <div id="exam-type" style="font-size: 32px; margin-bottom: 20px;"></div>
+        <div id="exam-centre" class="hidden" style="color: red; margin-bottom: 20px;">Inverell High School - Examination Centre 222</div>
+        <div id="exam-timers" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+        <div id="pause-message" class="hidden"></div>
+        <div class="bottom-buttons">
+            <button id="less" title="Subtract 1 minute from current timer" onclick="adjustAllExams(-1)">−</button>
+            <button id="pause" title="Pause / unpause timer" onclick="pauseAllExams()">&#10074;&#10074;</button>
+            <button id="more" title="Add 1 minute to current timer" onclick="adjustAllExams(1)">+</button>
+        </div>
+    </div>
+    <script>
+        let exams = [];
+        let pauseStartTime = null;
+        let intervalId;
+
+        function addExam() {
+            const examName = document.getElementById('examname').value;
+            const readMins = parseInt(document.getElementById('readmins').value, 10);
+            const writeHrs = parseInt(document.getElementById('writehrs').value, 10);
+            const writeMins = parseInt(document.getElementById('writemins').value, 10);
+            const optionalInfo = document.getElementById('optional').value;
+
+            if (!examName || isNaN(readMins) || isNaN(writeHrs) || isNaN(writeMins)) {
+                document.getElementById('error').innerText = "Error: Please fill out all fields with valid numbers";
+                return;
+            }
+
+            const readEndTime = new Date(Date.now() + readMins * 60 * 1000);
+            const writeEndTime = new Date(readEndTime.getTime() + writeHrs * 60 * 60 * 1000 + writeMins * 60 * 1000);
+
+            const exam = {
+                name: examName,
+                readMins: readMins,
+                writeHrs: writeHrs,
+                writeMins: writeMins,
+                optionalInfo: optionalInfo,
+                status: "Reading Time",
+                target: readEndTime.getTime(),
+                containerId: exams.length,
+                paused: false,
+                startTime: Date.now(),
+                readEndTime: readEndTime,
+                writeEndTime: writeEndTime,
+                remainingReadTime: readMins * 60 * 1000,
+                remainingWriteTime: (writeHrs * 60 + writeMins) * 60 * 1000
+            };
+
+            exams.push(exam);
+            renderExamList();
+            clearInputs();
+        }
+
+        function renderExamList() {
+            const examListDiv = document.getElementById('exam-list');
+            examListDiv.innerHTML = '';
+            exams.forEach((exam, index) => {
+                const examDiv = document.createElement('div');
+                examDiv.className = 'exam-info-container';
+                examDiv.innerHTML = `
+                    <div class="exam-title">${index + 1}</div>
+                    <div>Reading: ${exam.readMins} mins, Writing: ${exam.writeHrs} hrs ${exam.writeMins} mins</div>
+                    <button onclick="deleteExam(${index})" class="delete-button">Delete</button>
+                `;
+                examListDiv.appendChild(examDiv);
+            });
+        }
+
+        function clearInputs() {
+            document.getElementById('examname').value = '';
+            document.getElementById('readmins').value = '';
+            document.getElementById('writehrs').value = '';
+            document.getElementById('writemins').value = '';
+            document.getElementById('optional').value = '';
+            document.getElementById('error').innerText = '';
+        }
+
+        function deleteExam(index) {
+            exams.splice(index, 1);
+            renderExamList();
+        }
+
+        function clearAllExams() {
+            exams = [];
+            renderExamList();
+        }
+
+        function goToExamInfo() {
+            document.getElementById('setup-page').classList.add('hidden');
+            document.getElementById('exam-info-page').classList.remove('hidden');
+            const examInfoListDiv = document.getElementById('exam-info-list');
+            examInfoListDiv.innerHTML = '';
+            exams.forEach((exam) => {
+                const examInfoDiv = document.createElement('div');
+                examInfoDiv.className = 'exam-info-container';
+                examInfoDiv.innerHTML = `
+                    <div class="exam-title">${exam.name}</div>
+                    <div>Reading time: ${exam.readMins} minutes</div>
+                    <div>Writing time: ${exam.writeHrs} hours and ${exam.writeMins} minutes</div>
+                    <div class="optional-info">${exam.optionalInfo ? `Optional info: ${exam.optionalInfo}` : ''}</div>
+                `;
+                examInfoListDiv.appendChild(examInfoDiv);
+            });
+
+            const dateStr = new Date().toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            document.getElementById('exam-date-info').innerText = dateStr;
+
+            setInterval(() => {
+                document.getElementById('current-time-info').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            }, 1000);
+        }
+
+        function goBackToSetup() {
+            document.getElementById('setup-page').classList.remove('hidden');
+            document.getElementById('exam-info-page').classList.add('hidden');
+        }
+
+        function commenceExams() {
+            const now = Date.now();
+
+            exams.forEach((exam) => {
+                exam.target = now + exam.remainingReadTime;
+                exam.readEndTime = new Date(exam.target);
+                exam.writeEndTime = new Date(exam.target + exam.remainingWriteTime);
+                exam.startTime = now;
+            });
+
+            document.getElementById('exam-info-page').classList.add('hidden');
+            document.getElementById('exam-page').classList.remove('hidden');
+
+            let examTypeText = '';
+            const examTypeElements = document.getElementsByName('examtype');
+            examTypeElements.forEach((element) => {
+                if (element.checked) {
+                    if (element.value === 'Other') {
+                        examTypeText += document.getElementById('other-text').value + ' ';
+                    } else {
+                        examTypeText += element.value + ' ';
+                    }
+                }
+            });
+            document.getElementById('exam-type').innerText = examTypeText.trim();
+
+            if (document.getElementById('show-centre').checked) {
+                document.getElementById('exam-centre').classList.remove('hidden');
+            }
+
+            if (document.getElementById('hide-crest').checked) {
+                document.getElementById('school-crest').classList.add('hidden');
+            }
+
+            if (document.getElementById('time-only').checked) {
+                document.getElementById('exam-timers').classList.add('hidden');
+                document.getElementById('exam-type').classList.add('hidden');
+                document.getElementById('exam-centre').classList.add('hidden');
+                document.querySelector('.bottom-buttons').classList.add('hidden');
+            }
+
+            exams.forEach((exam) => {
+                renderExamTimer(exam);
+            });
+
+            intervalId = setInterval(updateExams, 1000);
+
+            const dateStr = new Date().toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            document.getElementById('exam-date').innerText = dateStr;
+        }
+
+        function updateExams() {
+            const now = Date.now();
+            exams.forEach((exam) => {
+                if (!exam.paused) {
+                    updateExamTime(exam, now);
+                }
+            });
+
+            const dateStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            document.getElementById('curtime').innerText = dateStr;
+        }
+
+        function updateExamTime(exam, now) {
+            let timeRemaining = exam.target - now;
+
+            if (exam.status === "Reading Time") {
+                if (timeRemaining <= 0) {
+                    exam.status = "Writing Time";
+                    exam.target = now + exam.remainingWriteTime;
+                    exam.writeEndTime = new Date(exam.target);
+                } else {
+                    exam.remainingReadTime = timeRemaining;
+                }
+            } else if (exam.status === "Writing Time") {
+                if (timeRemaining <= 0) {
+                    exam.status = "Time Up";
+                    timeRemaining = 0;
+                } else {
+                    exam.remainingWriteTime = timeRemaining;
+                    exam.writeEndTime = new Date(exam.target);
+                }
+            }
+
+            const examDiv = document.getElementById(`exam-${exam.containerId}`);
+            examDiv.querySelector('.status').innerText = exam.status;
+            examDiv.querySelector('.write-end-time').innerText = exam.writeEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+
+            examDiv.className = 'exam-container';
+            if (exam.status === "Reading Time") {
+                examDiv.classList.add('reading-time');
+            } else if (exam.status === "Writing Time") {
+                if (timeRemaining <= 10 * 60 * 1000) {
+                    examDiv.classList.add('last-10-mins');
+                } else {
+                    examDiv.classList.add('writing-time');
+                }
+            } else if (exam.status === "Time Up") {
+                examDiv.classList.add('time-up');
+                examDiv.querySelector('.status').innerHTML = `<div class="finished">Finished</div>`;
+            }
+        }
+
+        function renderExamTimer(exam) {
+            const examTimersDiv = document.getElementById('exam-timers');
+
+            const examDiv = document.createElement('div');
+            examDiv.id = `exam-${exam.containerId}`;
+            examDiv.className = 'exam-container';
+            examDiv.innerHTML = `
+                <div class="exam-title">${exam.name}</div>
+                <div class="exam-duration">Duration: ${exam.writeHrs} hrs ${exam.writeMins} mins + ${exam.readMins} mins reading</div>
+                <div>Status: <span class="status">${exam.status}</span></div>
+                <div class="time-end">Reading time ends: ${exam.readEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                <div class="time-end">Writing time ends: <span class="write-end-time">${exam.writeEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span></div>
+                <div class="optional-info">${exam.optionalInfo ? `Optional info: ${exam.optionalInfo}` : ''}</div>
+            `;
+
+            examTimersDiv.appendChild(examDiv);
+        }
+
+        function pauseAllExams() {
+            if (pauseStartTime) {
+                const pauseEndTime = Date.now();
+                const pauseDuration = pauseEndTime - pauseStartTime;
+
+                exams.forEach((exam) => {
+                    if (exam.paused) {
+                        exam.target += pauseDuration;
+                        exam.paused = false;
+                        if (exam.status === "Writing Time") {
+                            exam.writeEndTime = new Date(exam.target);
+                        }
+                    }
+                });
+
+                pauseStartTime = null;
+                document.getElementById('pause').innerHTML = '&#10074;&#10074;';
+                document.getElementById('pause-message').classList.add('hidden');
+                intervalId = setInterval(updateExams, 1000);
+            } else {
+                pauseStartTime = Date.now();
+
+                exams.forEach((exam) => {
+                    if (!exam.paused) {
+                        exam.paused = true;
+                    }
+                });
+
+                clearInterval(intervalId);
+                document.getElementById('pause').innerHTML = '&#9658;';
+                document.getElementById('pause-message').classList.remove('hidden');
+                document.getElementById('pause-message').innerText = `Time is paused`;
+            }
+        }
+
+        function adjustAllExams(minutes) {
+            exams.forEach((exam) => {
+                exam.target += minutes * 60 * 1000;
+                if (exam.status === "Writing Time") {
+                    exam.writeEndTime = new Date(exam.target);
+                }
+            });
+        }
+
+        function downloadExamSchedule() {
+            const schedule = exams.map(exam => `Exam: ${exam.name}\nReading Time: ${exam.readMins} mins\nWriting Time: ${exam.writeHrs} hrs ${exam.writeMins} mins\nReading ends at: ${exam.readEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}\nWriting ends at: ${exam.writeEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}\nOptional info: ${exam.optionalInfo || 'N/A'}\n`).join('\n');
+            const blob = new Blob([schedule], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'exam-schedule.txt';
+            link.click();
+        }
+
+        function printExamSchedule() {
+            const schedule = exams.map(exam => `Exam: ${exam.name}\nReading Time: ${exam.readMins} mins\nWriting Time: ${exam.writeHrs} hrs ${exam.writeMins} mins\nReading ends at: ${exam.readEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}\nWriting ends at: ${exam.writeEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}\nOptional info: ${exam.optionalInfo || 'N/A'}\n`).join('\n');
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`<pre>${schedule}</pre>`);
+            newWindow.document.close();
+            newWindow.print();
+        }
+
+        document.getElementById('other').addEventListener('change', function() {
+            document.getElementById('other-text').disabled = !this.checked;
+        });
+    </script>
+</body>
+</html>
