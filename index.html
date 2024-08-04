@@ -315,37 +315,6 @@
         let exams = [];
         let pauseStartTime = null;
         let intervalId;
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        osc.type = 'sine';
-        osc.frequency.setValueAtTime(440, audioCtx.currentTime);
-        osc.start();
-        let oscon = false;
-        let beepcount = 0;
-        const beeplength = 100;
-        const beepdelay = 200;
-
-        function oscstop() {
-            osc.disconnect(audioCtx.destination);
-            oscon = false;
-            if (beepcount > 1) {
-                beepcount--;
-                setTimeout(beep, beepdelay);
-            }
-        }
-
-        function beep() {
-            if (!oscon) {
-                osc.connect(audioCtx.destination);
-                oscon = true;
-                setTimeout(oscstop, beeplength);
-            }
-        }
-
-        function alarm(x) {
-            beepcount = x;
-            beep();
-        }
 
         function addExam() {
             const examName = document.getElementById('examname').value;
@@ -430,8 +399,6 @@
                     <div class="exam-title">${exam.name}</div>
                     <div>Reading time: ${exam.readMins} minutes</div>
                     <div>Writing time: ${exam.writeHrs} hours and ${exam.writeMins} minutes</div>
-                    <div class="time-end">Reading time ends at: ${exam.readEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
-                    <div class="time-end">Writing time ends at: ${exam.writeEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                     <div class="optional-info">${exam.optionalInfo ? `Optional info: ${exam.optionalInfo}` : ''}</div>
                 `;
                 examInfoListDiv.appendChild(examInfoDiv);
@@ -525,7 +492,6 @@
                     exam.status = "Writing Time";
                     exam.target = now + exam.remainingWriteTime;
                     exam.writeEndTime = new Date(exam.target);
-                    alarm(1);
                 } else {
                     exam.remainingReadTime = timeRemaining;
                 }
@@ -533,19 +499,13 @@
                 if (timeRemaining <= 0) {
                     exam.status = "Time Up";
                     timeRemaining = 0;
-                    alarm(3);
-                    clearInterval(intervalId);
                 } else {
                     exam.remainingWriteTime = timeRemaining;
                     exam.writeEndTime = new Date(exam.target);
-                    if (timeRemaining <= 10 * 60 * 1000 && timeRemaining > 9 * 60 * 1000) {
-                        alarm(1);
-                    }
                 }
             }
 
             const examDiv = document.getElementById(`exam-${exam.containerId}`);
-            examDiv.querySelector('.time').innerText = `${Math.floor(timeRemaining / 60000)}m ${Math.floor((timeRemaining % 60000) / 1000)}s`;
             examDiv.querySelector('.status').innerText = exam.status;
             examDiv.querySelector('.write-end-time').innerText = exam.writeEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
 
@@ -573,7 +533,6 @@
             examDiv.innerHTML = `
                 <div class="exam-title">${exam.name}</div>
                 <div>Status: <span class="status">${exam.status}</span></div>
-                <div class="time-label remaining-time">Remaining time: <span class="time"></span></div>
                 <div class="time-end">Reading time ends: ${exam.readEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                 <div class="time-end">Writing time ends: <span class="write-end-time">${exam.writeEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span></div>
                 <div class="optional-info">${exam.optionalInfo ? `Optional info: ${exam.optionalInfo}` : ''}</div>
