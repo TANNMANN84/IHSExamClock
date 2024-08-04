@@ -46,6 +46,10 @@
         .time-label {
             font-size: 24px;
         }
+        .exam-duration {
+            font-size: 20px;
+            margin-bottom: 10px;
+        }
         .remaining-time {
             font-size: 18px;
         }
@@ -532,6 +536,7 @@
             examDiv.className = 'exam-container';
             examDiv.innerHTML = `
                 <div class="exam-title">${exam.name}</div>
+                <div class="exam-duration">Duration: ${exam.writeHrs} hrs ${exam.writeMins} mins + ${exam.readMins} mins reading</div>
                 <div>Status: <span class="status">${exam.status}</span></div>
                 <div class="time-end">Reading time ends: ${exam.readEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
                 <div class="time-end">Writing time ends: <span class="write-end-time">${exam.writeEndTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true })}</span></div>
