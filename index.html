@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examination Timer</title>
+    <!-- Materialize CSS CDN -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: sans-serif;
+            color: #424242;
+            margin: 20px;
+            text-align: center;
+            background-color: white;
+            transition: background-color 0.5s, color 0.5s;
+        }
+        body.dark-mode {
+            background-color: #121212;
+            color: #e0e0e0;
+        }
+        #school-crest {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 150px; /* Adjusted size */
+            height: auto;
+        }
+        .hidden {
+            display: none;
+        }
+        .exam-info-container {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin: 10px;
+            display: inline-block;
+            width: calc(30% - 20px);
+            text-align: center;
+            box-sizing: border-box;
+            background-color: #f9f9f9;
+            border-radius: 5px;
+            transition: background-color 0.5s, border-color 0.5s;
+        }
+        body.dark-mode .exam-info-container {
+            background-color: transparent;
+            border-color: #616161;
+        }
+        #main-title {
+            font-size: 40px;
+            color: red;
+            margin-bottom: 10px;
+        }
+        .exam-title {
+            font-size: 36px;
+            font-weight: bold;
+        }
+        #curtime {
+            font-family: sans-serif;
+            font-size: 150px;
+            color: #424242;
+            padding-top: 20px;
+            transition: color 0.5s;
+        }
+        body.dark-mode #curtime {
+            color: #ffffff;
+        }
+        #exam-date, #exam-type, #exam-centre, .time-label, .remaining-time, .time-end, .optional-info {
+            font-size: 32px;
+        }
+        .button-actions a, .button-container a {
+            font-size: 24px;
+            padding: 10px 20px;
+            margin: 10px;
+        }
+        .reading-time {
+            background-color: #e0f7fa;
+        }
+        .writing-time {
+            background-color: #e8f5e9;
+        }
+        .last-10-mins {
+            background-color: #fff3e0;
+        }
+        .time-up {
+            background-color: #ff6c6c;
+        }
+        .radio-list, .switch-list {
+            text-align: center;
+            list-style-type: none;
+            padding: 0;
+        }
+        .radio-item, .switch-item {
+            margin-bottom: 10px;
+        }
+        .radio-item label > span {
+            font-size: 36px !important; /* Adjust this value for radio buttons */
+        }
+        .switch-item label {
+            font-size: 36px !important; /* Adjust this value for toggle switches */
+        }
+        .radio-item input[type="radio"], .switch-item input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+        }
+        .switch-item .switch {
+            display: inline-block;
+            vertical-align: middle;
+        }
+        .auto-start-message {
+            font-size: 32px;
+            font-weight: bold;
+        }
+        .flex-container {
+            display: flex;
+            justify-content: space-around;
+        }
+        .step {
+            display: none;
+        }
+        .step.active {
+            display: block;
+        }
+        .option-description {
+            font-size: 18px;
+            color: #666;
+            margin-top: -10px;
+        }
+        .selected-options {
+            font-size: 15px;
+        }
+        .section-title {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+        #setup-title {
+            font-size: 40px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .switch-container {
+            position: fixed;
+            bottom: 10px;
+            left: 10px;
+            z-index: 1000;
+        }
+        .version-info {
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            font-size: 12px;
+            color: lightgrey;
+        }
+        @media (max-width: 992px) {
+            #curtime {
+                font-size: 100px;
+            }
+            .exam-title {
+                font-size: 28px;
+            }
+            #exam-date, #exam-type, #exam-centre, .time-label, .remaining-time, .time-end, .optional-info {
+                font-size: 24px;
+            }
+            .button-actions a, .button-container a {
+                font-size: 20px;
+                padding: 8px 16px;
+                margin: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <img id="school-crest" src="school-crest.png" alt="School Crest">
+    <div id="main-title">Examination Timer</div>
+    <div id="setup-page">
+        <div id="setup-title">Examination Setup Page</div>
+        <div class="container">
+            <!-- Step 1: Select Examination Type -->
+            <div class="step active" id="step-1">
+                <h5 class="section-title">Examination type:</h5>
+                <ul class="radio-list">
+                    <li class="radio-item">
+                        <label>
+                            <input type="radio" name="examtype" value="Trial HSC Examinations">
+                            <span>Trial HSC Examinations</span>
+                        </label>
+                    </li>
+                    <li class="radio-item">
+                        <label>
+                            <input type="radio" name="examtype" value="HSC Examinations">
+                            <span>HSC Examinations</span>
+                        </label>
+                    </li>
+                    <li class="radio-item">
+                        <label>
+                            <input type="radio" name="examtype" value="Preliminary Examinations">
+                            <span>Preliminary Examinations</span>
+                        </label>
+                    </li>
+                    <li class="radio-item">
+                        <label>
+                            <input type="radio" name="examtype" value="Half Yearly Examinations">
+                            <span>Half Yearly Examinations</span>
+                        </label>
+                    </li>
+                    <li class="radio-item">
+                        <label>
+                            <input type="radio" name="examtype" value="Exit Examinations">
+                            <span>Exit Examinations</span>
+                        </label>
+                    </li>
+                    <li class="radio-item">
+                        <label>
+                            <input type="radio" name="examtype" value="Yearly Examinations">
+                            <span>Yearly Examinations</span>
+                        </label>
+                    </li>
+                    <li class="radio-item">
+                        <label>
+                            <input type="radio" name="examtype" value="Other">
+                            <span>Other</span>
+                            <input type="text" id="other-text" placeholder="Specify other" disabled style="margin-left: 10px;">
+                        </label>
+                    </li>
+                </ul>
+                <div class="button-actions">
+                    <a class="btn-large blue" onclick="nextStep()" style="border-radius: 15px;">Next</a>
+
+                </div>
+            </div>
+            <!-- Step 2: Enable Colour Alerts -->
+            <div class="step" id="step-2">
+                <h5 class="section-title">Enable Colour Alerts</h5>
+                <ul class="switch-list">
+                    <li class="switch-item">
+                        <label>No (Default)
+                            <div class="switch">
+                                <label>
+                                    <input type="checkbox" name="colour-alerts">
+                                    <span class="lever"></span>
+                                </label>
+                            </div>
+                            Yes
+                        </label>
+                    </li>
+                </ul>
+                <div class="option-description">This enables colour prompts for students where the exam information box will display Blue during reading time, green during writing time, orange in the final 10 minutes of exam and Red when the exam has finished. Please note, this option is not avaliable when darkmode is enabled.</div>
+                <div class="button-actions">
+                    <a class="btn-large blue" onclick="prevStep()" style="border-radius: 15px;">Back</a>
+                    <a class="btn-large blue" onclick="nextStep()" style="border-radius: 15px;">Next</a>
+                </div>
+            </div>
+            <!-- Step 3: Show Examination Centre -->
+            <div class="step" id="step-3">
+                <h5 class="section-title">Show Examination Centre</h5>
+                <ul class="switch-list">
+                    <li class="switch-item">
+                        <label>No (Default)
+                            <div class="switch">
+                                <label>
+                                    <input type="checkbox" name="show-centre">
+                                    <span class="lever"></span>
+                                </label>
+                            </div>
+                            Yes
+                        </label>
+                    </li>
+                </ul>
+                <div class="option-description">This will display 'Inverell High School - Examination Centre 222' when selected.</div>
+                <div class="button-actions">
+                    <a class="btn-large blue" onclick="prevStep()" style="border-radius: 15px;">Back</a>
+                    <a class="btn-large blue" onclick="nextStep()" style="border-radius: 15px;">Next</a>
+                </div>
+            </div>
+            <!-- Step 4: Disable School Crest -->
+            <div class="step" id="step-4">
+                <h5 class="section-title">Disable School Crest</h5>
+                <ul class="switch-list">
+                    <li class="switch-item">
+                        <label>No (Default)
+                            <div class="switch">
+                                <label>
+                                    <input type="checkbox" name="disable-crest">
+                                    <span class="lever"></span>
+                                </label>
+                            </div>
+                            Yes
+                        </label>
+                    </li>
+                </ul>
+                <div class="option-description">This will hide the school crest on the final page.</div>
+                <div class="button-actions">
+                    <a class="btn-large blue" onclick="prevStep()" style="border-radius: 15px;">Back</a>
+                    <a class="btn-large blue" onclick="nextStep()" style="border-radius: 15px;">Next</a>
+                </div>
+            </div>
+            <!-- Step 5: Show Exam Status -->
+            <div class="step" id="step-5">
+                <h5 class="section-title">Show Exam Status</h5>
+                <ul class="switch-list">
+                    <li class="switch-item">
+                        <label>No (Default)
+                            <div class="switch">
+                                <label>
+                                    <input type="checkbox" name="show-exam-status">
+                                    <span class="lever"></span>
+                                </label>
+                            </div>
+                            Yes
+                        </label>
+                    </li>
+                </ul>
+                <div class="option-description">This will display what part of the exam is taking place, ie. reading or writing time.</div>
+                <div class="button-actions">
+                    <a class="btn-large blue" onclick="prevStep()" style="border-radius: 15px;">Back</a>
+                    <a class="btn-large blue" onclick="nextStep()" style="border-radius: 15px;">Next</a>
+                </div>
+            </div>
+            <!-- Step 6: Show Exam Starting and Ending Times -->
+            <div class="step" id="step-6">
+                <h5 class="section-title">Show Exam Starting and Ending Times</h5>
+                <ul class="switch-list">
+                    <li class="switch-item">
+                        <label>No (Default)
+                            <div class="switch">
+                                <label>
+                                    <input type="checkbox" name="show-read-write-time">
+                                    <span class="lever"></span>
+                                </label>
+                            </div>
+                            Yes
+                        </label>
+                    </li>
+                </ul>
+                <div class="option-description">This will display the times that the exam starts and ends.</div>
+                <div class="button-actions">
+                    <a class="btn-large blue" onclick="prevStep()" style="border-radius: 15px;">Back</a>
+                    <a class="btn-large blue" onclick="nextStep()" style="border-radius: 15px;">Next</a>
+                </div>
+            </div>
+            <!-- Step 7: Review and Add Exams -->
+            <div class="step" id="step-7">
+                <h5 class="section-title">Review your selections and add exams:</h5>
+                <div id="review-selections" class="selected-options"></div>
+                <div class="button-actions">
+                    <a class="btn-large blue" onclick="prevStep()" style="border-radius: 15px;">Back</a>
+                    <a class="btn-large green modal-trigger" href="#add-exam-modal" style="border-radius: 15px;">Add Exam</a>
+                </div>
+                <div id="exam-list" class="container section"></div>
+                <div class="button-actions">
+                    <a class="btn-large red" onclick="confirmClearAllExams()" style="border-radius: 15px;">Clear All Exams</a>
+                    <a class="btn-large green" onclick="goToExamInfo()" style="border-radius: 15px;">Preview and Commence Timer</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="add-exam-modal" class="modal">
+        <div class="modal-content">
+            <h4>Add Examination</h4>
+            <div class="row">
+                <div class="input-field col s12">
+                    <input type="text" id="examname" required>
+                    <label for="examname">Examination Name</label>
+                </div>
+                <div class="input-field col s12 m6">
+                    <input type="number" id="readmins" class="validate" required>
+                    <label for="readmins">Reading time (mins)</label>
+                </div>
+                <div class="input-field col s6 m3">
+                    <input type="number" id="writehrs" class="validate" required>
+                    <label for="writehrs">Writing time (hrs)</label>
+                </div>
+                <div class="input-field col s6 m3">
+                    <input type="number" id="writemins" class="validate" required>
+                    <label for="writemins">Writing time (mins)</label>
+                </div>
+                <div class="input-field col s12">
+                    <textarea id="optional" class="materialize-textarea"></textarea>
+                    <label for="optional">Optional extra information for students</label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <a class="modal-close waves-effect waves-red btn-flat" onclick="addExam()">Add Exam</a>
+            </div>
+            <div id="error" role="alert" style="color:red;"></div>
+        </div>
+    </div>
+
+    <div id="exam-info-page" class="hidden">
+        <div id="download-print-buttons" class="right-align">
+            <a class="btn" onclick="downloadExamSchedule()" style="border-radius: 15px;">Download Schedule</a>
+            <a class="btn" onclick="printExamSchedule()" style="border-radius: 15px;">Print Schedule</a>
+        </div>
+        <div id="exam-info-list" class="container"></div>
+        <div class="button-container">
+            <a class="btn-large green" id="commence-button" onclick="commenceExams()" style="border-radius: 15px;">Commence Exams</a>
+            <a class="btn-large blue modal-trigger" href="#auto-start-modal" id="auto-start-button" style="border-radius: 15px;">Exam Auto-Start</a>
+            <a class="btn-large red hidden" id="cancel-auto-start" onclick="cancelAutoStart()" style="border-radius: 15px;">Cancel Auto-Start</a>
+        </div>
+        <div id="auto-start-message" class="hidden auto-start-message"></div>
+        <div id="exam-date-info"></div>
+        <div>The current time is <span id="current-time-info"></span></div>
+    </div>
+    <div id="exam-page" class="hidden">
+        <div id="exam-date"></div>
+        <div id="curtime"></div>
+        <div id="exam-type" style="font-size: 36px; margin-bottom: 10px;"></div>
+        <div id="exam-centre" class="hidden" style="color: red; margin-bottom: 10px;">Inverell High School - Examination Centre 222</div>
+        <div id="exam-timers" style="display: flex; flex-wrap: wrap; justify-content: center;"></div>
+    </div>
+
+    <!-- Auto-Start Modal -->
+    <div id="auto-start-modal" class="modal">
+        <div class="modal-content">
+            <h4>Set Auto-Start Time</h4>
+            <div class="input-field">
+                <input type="time" id="auto-start-time" class="validate">
+                <label for="auto-start-time">Auto-Start Time</label>
+            </div>
+            <div class="modal-footer">
+                <a class="modal-close waves-effect waves-green btn-flat" onclick="setAutoStart()" style="border-radius: 15px;">Set Auto-Start</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Materialize JS and jQuery -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            M.AutoInit();
+        });
+
+        let exams = [];
+        let currentStep = 1;
+        let intervalId;
+        let autoStartIntervalId;
+
+        function nextStep() {
+            if (currentStep < 7) {
+                document.getElementById(`step-${currentStep}`).classList.remove('active');
+                currentStep++;
+                document.getElementById(`step-${currentStep}`).classList.add('active');
+                if (currentStep === 7) {
+                    displayReviewSelections();
+                }
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                document.getElementById(`step-${currentStep}`).classList.remove('active');
+                currentStep--;
+                document.getElementById(`step-${currentStep}`).classList.add('active');
+            }
+        }
+
+        function displayReviewSelections() {
+            const reviewDiv = document.getElementById('review-selections');
+            reviewDiv.innerHTML = '<h5 class="section-title">Selected Examination Types:</h5>';
+            const examTypes = document.getElementsByName('examtype');
+            examTypes.forEach(type => {
+                if (type.checked) {
+                    reviewDiv.innerHTML += `<p>${type.value}</p>`;
+                }
+            });
+            reviewDiv.innerHTML += '<h5 class="section-title">Selected Options:</h5>';
+            const options = [
+                'colour-alerts', 
+                'show-centre', 
+                'disable-crest', 
+                'show-exam-status', 
+                'show-read-write-time'
+            ];
+            options.forEach(option => {
+                const selectedOption = document.querySelector(`input[name="${option}"]`);
+                reviewDiv.innerHTML += `<p>${option.replace(/-/g, ' ')}: ${selectedOption.checked ? 'Yes' : 'No'}</p>`;
+            });
+        }
+
+        function addExam() {
+            const examName = document.getElementById('examname').value;
+            const readMins = parseInt(document.getElementById('readmins').value, 10);
+            const writeHrs = parseInt(document.getElementById('writehrs').value, 10);
+            const writeMins = parseInt(document.getElementById('writemins').value, 10);
+            const optionalInfo = document.getElementById('optional').value;
+
+            if (!examName || isNaN(readMins) || isNaN(writeHrs) || isNaN(writeMins)) {
+                document.getElementById('error').innerText = "Error: Please fill out all fields with valid numbers";
+                return;
+            }
+
+            const exam = {
+                name: examName,
+                readMins: readMins,
+                writeHrs: writeHrs,
+                writeMins: writeMins,
+                optionalInfo: optionalInfo,
+                status: "Reading Time",
+                containerId: exams.length,
+                remainingReadTime: readMins * 60 * 1000,
+                remainingWriteTime: (writeHrs * 60 + writeMins) * 60 * 1000
+            };
+
+            exams.push(exam);
+            renderExamList();
+            clearInputs();
+            const addExamModal = document.getElementById('add-exam-modal');
+            const instance = M.Modal.getInstance(addExamModal);
+            instance.close();
+        }
+
+        function renderExamList() {
+            const examListDiv = document.getElementById('exam-list');
+            examListDiv.innerHTML = '';
+            exams.forEach((exam, index) => {
+                const examDiv = document.createElement('div');
+                examDiv.className = 'exam-info-container';
+                examDiv.innerHTML = `
+                    <div class="exam-title">${exam.name}</div>
+                    <div>Reading: ${exam.readMins} mins, Writing: ${exam.writeHrs} hrs ${exam.writeMins} mins</div>
+                    <a class="btn red" onclick="confirmDeleteExam(${index})" style="border-radius: 15px;">Delete</a>
+                `;
+                examListDiv.appendChild(examDiv);
+            });
+        }
+
+        function clearInputs() {
+            document.getElementById('examname').value = '';
+            document.getElementById('readmins').value = '';
+            document.getElementById('writehrs').value = '';
+            document.getElementById('writemins').value = '';
+            document.getElementById('optional').value = '';
+            document.getElementById('error').innerText = '';
+        }
+
+        function confirmDeleteExam(index) {
+            if (confirm('Are you sure you want to delete this exam?')) {
+                deleteExam(index);
+            }
+        }
+
+        function deleteExam(index) {
+            exams.splice(index, 1);
+            renderExamList();
+        }
+
+        function confirmClearAllExams() {
+            if (confirm('Are you sure you want to clear all exams?')) {
+                clearAllExams();
+            }
+        }
+
+        function clearAllExams() {
+            exams = [];
+            renderExamList();
+        }
+
+        function goToExamInfo() {
+            document.getElementById('setup-page').classList.add('hidden');
+            document.getElementById('exam-info-page').classList.remove('hidden');
+            const examInfoListDiv = document.getElementById('exam-info-list');
+            examInfoListDiv.innerHTML = '';
+            exams.forEach((exam) => {
+                const examInfoDiv = document.createElement('div');
+                examInfoDiv.className = 'exam-info-container';
+                examInfoDiv.innerHTML = `
+                    <div class="exam-title">${exam.name}</div>
+                    <div>Reading time: ${exam.readMins} minutes</div>
+                    <div>Writing time: ${exam.writeHrs} hours and ${exam.writeMins} minutes</div>
+                    <div class="optional-info">${exam.optionalInfo ? `Optional info: ${exam.optionalInfo}` : ''}</div>
+                `;
+                examInfoListDiv.appendChild(examInfoDiv);
+            });
+
+            const dateStr = new Date().toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            document.getElementById('exam-date-info').innerText = dateStr;
+
+            setInterval(() => {
+                document.getElementById('current-time-info').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            }, 1000);
+        }
+
+        function goBackToSetup() {
+            document.getElementById('setup-page').classList.remove('hidden');
+            document.getElementById('exam-info-page').classList.add('hidden');
+        }
+
+        function commenceExams() {
+            const now = Date.now();
+
+            exams.forEach((exam) => {
+                exam.target = now + exam.remainingReadTime;
+                exam.readEndTime = new Date(exam.target);
+                exam.writeEndTime = new Date(exam.target + exam.remainingWriteTime);
+                exam.startTime = now;
+                exam.examStartTime = new Date(exam.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+                exam.examEndTime = new Date(exam.target + exam.remainingWriteTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+            });
+
+            document.getElementById('exam-info-page').classList.add('hidden');
+            document.getElementById('exam-page').classList.remove('hidden');
+
+            let examTypeText = '';
+            const examTypeElements = document.getElementsByName('examtype');
+            examTypeElements.forEach((element) => {
+                if (element.checked) {
+                    if (element.value === 'Other') {
+                        examTypeText += document.getElementById('other-text').value + ' ';
+                    } else {
+                        examTypeText += element.value + ' ';
+                    }
+                }
+            });
+            document.getElementById('exam-type').innerText = examTypeText.trim();
+
+            if (document.querySelector('input[name="show-centre"]').checked) {
+                document.getElementById('exam-centre').classList.remove('hidden');
+            }
+
+            if (document.querySelector('input[name="disable-crest"]').checked) {
+                document.getElementById('school-crest').classList.add('hidden');
+            }
+
+            exams.forEach((exam) => {
+                renderExamTimer(exam);
+            });
+
+            intervalId = setInterval(updateExams, 1000);
+
+            const dateStr = new Date().toLocaleDateString('en-US', {
+                weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+            });
+            document.getElementById('exam-date').innerText = dateStr;
+
+            openFullScreen();
+        }
+
+        function openFullScreen() {
+            const elem = document.documentElement;
+            if (elem.requestFullscreen) {
+                elem.requestFullscreen();
+            } else if (elem.mozRequestFullScreen) { /* Firefox */
+                elem.mozRequestFullScreen();
+            } else if (elem.webkitRequestFullscreen) { /* Chrome, Safari and Opera */
+                elem.webkitRequestFullscreen();
+            } else if (elem.msRequestFullscreen) { /* IE/Edge */
+                elem.msRequestFullscreen();
+            }
+        }
+
+        function updateExams() {
+            const now = Date.now();
+            exams.forEach((exam) => {
+                updateExamTime(exam, now);
+            });
+
+            const dateStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+            document.getElementById('curtime').innerText = dateStr;
+        }
+
+        function updateExamTime(exam, now) {
+            let timeRemaining = exam.target - now;
+
+            const examDiv = document.getElementById(`exam-${exam.containerId}`);
+            if (!examDiv) return;
+
+            if (exam.status === "Reading Time") {
+                if (timeRemaining <= 0) {
+                    exam.status = "Writing Time";
+                    exam.target = now + exam.remainingWriteTime;
+                    exam.writeEndTime = new Date(exam.target);
+                } else {
+                    exam.remainingReadTime = timeRemaining;
+                }
+            } else if (exam.status === "Writing Time") {
+                if (timeRemaining <= 0) {
+                    exam.status = "Time Up";
+                    timeRemaining = 0;
+                } else {
+                    exam.remainingWriteTime = timeRemaining;
+                    exam.writeEndTime = new Date(exam.target);
+                }
+            }
+
+            if (document.querySelector('input[name="show-read-write-time"]').checked) {
+                examDiv.querySelector('.read-end-time').innerText = `Exam starts: ${exam.examStartTime}`;
+                examDiv.querySelector('.write-end-time').innerText = `Exam ends: ${exam.examEndTime}`;
+            } else {
+                examDiv.querySelector('.read-end-time').innerText = '';
+                examDiv.querySelector('.write-end-time').innerText = '';
+            }
+            if (document.querySelector('input[name="show-exam-status"]').checked) {
+                examDiv.querySelector('.status').innerHTML = `Exam Status: ${exam.status}`;
+            } else {
+                examDiv.querySelector('.status').innerText = '';
+            }
+
+            examDiv.className = 'exam-container card-panel';
+            if (document.querySelector('input[name="colour-alerts"]').checked) {
+                if (exam.status === "Reading Time") {
+                    examDiv.classList.add('reading-time');
+                } else if (exam.status === "Writing Time") {
+                    if (timeRemaining <= 10 * 60 * 1000) {
+                        examDiv.classList.add('last-10-mins');
+                    } else {
+                        examDiv.classList.add('writing-time');
+                    }
+                } else if (exam.status === "Time Up") {
+                    examDiv.classList.add('time-up');
+                    examDiv.querySelector('.status').innerHTML = `<div class="finished">Finished</div>`;
+                }
+            }
+        }
+
+        function renderExamTimer(exam) {
+            const examTimersDiv = document.getElementById('exam-timers');
+
+            const examDiv = document.createElement('div');
+            examDiv.id = `exam-${exam.containerId}`;
+            examDiv.className = 'exam-container card-panel';
+            examDiv.innerHTML = `
+                <div class="exam-title">${exam.name}</div>
+                <div>Duration: ${exam.writeHrs} hours ${exam.writeMins} minutes + ${exam.readMins} minutes reading time</div>
+                <div class="status"></div>
+                <div class="time-label remaining-time"></div>
+                <div class="time-end read-end-time"></div>
+                <div class="time-end write-end-time"></div>
+                <div class="optional-info">${exam.optionalInfo ? `Optional info: ${exam.optionalInfo}` : ''}</div>
+            `;
+
+            examTimersDiv.appendChild(examDiv);
+        }
+
+        function downloadExamSchedule() {
+            const schedule = exams.map(exam => `Exam: ${exam.name}\nReading Time: ${exam.readMins} mins\nWriting Time: ${exam.writeHrs} hrs ${exam.writeMins} mins\nExam starts: ${exam.examStartTime}\nExam ends: ${exam.examEndTime}\nOptional info: ${exam.optionalInfo || 'N/A'}\n`).join('\n');
+            const blob = new Blob([schedule], { type: 'text/plain' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'exam-schedule.txt';
+            link.click();
+        }
+
+        function printExamSchedule() {
+            const schedule = exams.map(exam => `Exam: ${exam.name}\nReading Time: ${exam.readMins} mins\nWriting Time: ${exam.writeHrs} hrs ${exam.writeMins} mins\nExam starts: ${exam.examStartTime}\nExam ends: ${exam.examEndTime}\nOptional info: ${exam.optionalInfo || 'N/A'}\n`).join('\n');
+            const newWindow = window.open('', '_blank');
+            newWindow.document.write(`<pre>${schedule}</pre>`);
+            newWindow.document.close();
+            newWindow.print();
+        }
+
+        document.querySelector('input[name="examtype"][value="Other"]').addEventListener('change', function() {
+            document.getElementById('other-text').disabled = !this.checked;
+        });
+
+        // Auto-Start Exam Logic
+        function setAutoStart() {
+            const autoStartTime = document.getElementById('auto-start-time').value;
+            if (!autoStartTime) {
+                alert('Please enter a valid time.');
+                return;
+            }
+
+            const now = new Date();
+            const [hours, minutes] = autoStartTime.split(':').map(Number);
+            const startDateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), hours, minutes, 0, 0);
+
+            if (startDateTime <= now) {
+                alert('The time must be in the future.');
+                return;
+            }
+
+            document.getElementById('commence-button').classList.add('hidden');
+            document.getElementById('auto-start-button').classList.add('hidden');
+            document.getElementById('cancel-auto-start').classList.remove('hidden');
+            document.getElementById('auto-start-message').classList.remove('hidden');
+            document.getElementById('auto-start-message').innerText = `Examinations will commence at ${autoStartTime}`;
+
+            autoStartIntervalId = setInterval(() => {
+                const currentTime = new Date();
+                if (currentTime >= startDateTime) {
+                    clearInterval(autoStartIntervalId);
+                    commenceExams();
+                }
+            }, 1000);
+        }
+
+        function cancelAutoStart() {
+            clearInterval(autoStartIntervalId);
+            document.getElementById('commence-button').classList.remove('hidden');
+            document.getElementById('auto-start-button').classList.remove('hidden');
+            document.getElementById('cancel-auto-start').classList.add('hidden');
+            document.getElementById('auto-start-message').classList.add('hidden');
+        }
+
+        // Ensure the clock is always displayed
+        setInterval(() => {
+            document.getElementById('curtime').innerText = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: true });
+        }, 1000);
+
+        // Dark mode toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const darkModeToggle = document.getElementById('dark-mode-toggle');
+            darkModeToggle.addEventListener('change', function() {
+                document.body.classList.toggle('dark-mode', this.checked);
+            });
+        });
+    </script>
+    <!-- Dark Mode Toggle -->
+    <div class="switch-container">
+        <div class="switch">
+            <label>
+                Light
+                <input type="checkbox" id="dark-mode-toggle">
+                <span class="lever"></span>
+                Dark
+            </label>
+        </div>
+    </div>
+    <!-- Site Version and Author -->
+    <div class="version-info">
+        Examination Timer - Current Version 3.2<br>
+        Author: Andrew Tann 2024
+    </div>
+</body>
+</html>
